@@ -16,6 +16,27 @@ def build_model(args, dataset):
                     activation=args.activation,
                     dropout_prob=args.dropout,
                     version = args.version).to(device)
+    elif args.model == 'gcn5':
+        model = GCNNet5(dataset.num_node_features,
+                        dataset.num_classes,
+                        nhid=args.nhid,
+                        activation=args.activation,
+                        dropout_prob=args.dropout,
+                        version=args.version).to(device)
+    elif args.model == 'gcn7':
+        model = GCNNet7(dataset.num_node_features,
+                        dataset.num_classes,
+                        nhid=args.nhid,
+                        activation=args.activation,
+                        dropout_prob=args.dropout,
+                        version=args.version).to(device)
+    elif args.model == 'gcn9':
+        model = GCNNet9(dataset.num_node_features,
+                        dataset.num_classes,
+                        nhid=args.nhid,
+                        activation=args.activation,
+                        dropout_prob=args.dropout,
+                        version=args.version).to(device)
     elif args.model == 'gat':
         model = GATNet(dataset.num_node_features,
                     dataset.num_classes,
@@ -23,6 +44,27 @@ def build_model(args, dataset):
                     activation=args.activation,
                     dropout_prob=args.dropout,
                     version = args.version).to(device)
+    elif args.model == 'gat5':
+        model = GATNet5(dataset.num_node_features,
+                        dataset.num_classes,
+                        nhid=args.nhid,
+                        activation=args.activation,
+                        dropout_prob=args.dropout,
+                        version=args.version).to(device)
+    elif args.model == 'gat7':
+        model = GATNet7(dataset.num_node_features,
+                        dataset.num_classes,
+                        nhid=args.nhid,
+                        activation=args.activation,
+                        dropout_prob=args.dropout,
+                        version=args.version).to(device)
+    elif args.model == 'gat9':
+        model = GATNet9(dataset.num_node_features,
+                        dataset.num_classes,
+                        nhid=args.nhid,
+                        activation=args.activation,
+                        dropout_prob=args.dropout,
+                        version=args.version).to(device)
     elif args.model == 'sage':
         model = SAGENet(dataset.num_node_features,
                     dataset.num_classes,
