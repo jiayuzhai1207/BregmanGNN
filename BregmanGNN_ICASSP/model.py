@@ -113,6 +113,225 @@ class GCNNet(nn.Module):
 
         return F.log_softmax(x, dim=1)
 
+
+class GCNNet5(nn.Module):
+    def __init__(self,
+                 num_features,
+                 num_classes,
+                 nhid = 16,
+                 activation = 'atan',
+                 dropout_prob=0.3,
+                 version = 'bregman'):
+
+        super(GCNNet5, self).__init__()
+        activation = activation.lower()
+        version =  version.lower()
+        # Hidden layers
+        self.layers = nn.ModuleList()
+        self.reparametrization = nn.ModuleList()
+        self.activation, self.offset, self.range = get(activation_name=activation, version=version)
+        self.drop1 = nn.Dropout(dropout_prob)
+
+        # To do ...
+        self.reparametrization.append(linear_with_init(num_features, nhid, init='simplex'))
+        self.reparametrization.append(nn.Identity())  # return input as output
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(linear_with_init(nhid, num_classes, init='simplex'))
+
+        # Bregman GCN layers  (GCN can be replaced with GAT, ChebNet etc.)
+        self.layers.append(GCNConv(in_channels = num_features, out_channels = nhid))
+        # for bregman
+        self.layers.append(GCNConv(in_channels= nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        # Output
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=num_classes))
+
+
+    def forward(self, data, edge_index):
+        x = data.x  # x has shape [num_nodes, num_input_features]
+        self.reparametrization[0] = constraint(self.reparametrization[0])
+        x_offset = torch.clamp(self.reparametrization[0](x), self.range[0], self.range[1])  # 限制self.reparametrization[0](x)的大小
+        x = self.activation(self.offset(x_offset) + self.layers[0](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[1](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[1](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[2](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[2](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[3](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[3](x, edge_index))
+        x = self.drop1(x)
+
+        self.reparametrization[4] = constraint(self.reparametrization[4])
+        x_offset = torch.clamp(self.reparametrization[4](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[4](x, edge_index))
+        #x = self.drop1(x)
+
+        return F.log_softmax(x, dim=1)
+
+class GCNNet7(nn.Module):
+    def __init__(self,
+                 num_features,
+                 num_classes,
+                 nhid = 16,
+                 activation = 'atan',
+                 dropout_prob=0.3,
+                 version = 'bregman'):
+
+        super(GCNNet7, self).__init__()
+        activation = activation.lower()
+        version =  version.lower()
+        # Hidden layers
+        self.layers = nn.ModuleList()
+        self.reparametrization = nn.ModuleList()
+        self.activation, self.offset, self.range = get(activation_name=activation, version=version)
+        self.drop1 = nn.Dropout(dropout_prob)
+
+        # To do ...
+        self.reparametrization.append(linear_with_init(num_features, nhid, init='simplex'))
+        self.reparametrization.append(nn.Identity())  # return input as output
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(linear_with_init(nhid, num_classes, init='simplex'))
+
+        # Bregman GCN layers  (GCN can be replaced with GAT, ChebNet etc.)
+        self.layers.append(GCNConv(in_channels = num_features, out_channels = nhid))
+        # for bregman
+        self.layers.append(GCNConv(in_channels= nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        # Output
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=num_classes))
+
+    def forward(self, data, edge_index):
+        x = data.x  # x has shape [num_nodes, num_input_features]
+        self.reparametrization[0] = constraint(self.reparametrization[0])
+        x_offset = torch.clamp(self.reparametrization[0](x), self.range[0], self.range[1])  # 限制self.reparametrization[0](x)的大小
+        x = self.activation(self.offset(x_offset) + self.layers[0](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[1](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[1](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[2](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[2](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[3](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[3](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[4](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[4](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[5](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[5](x, edge_index))
+        x = self.drop1(x)
+
+        self.reparametrization[6] = constraint(self.reparametrization[6])
+        x_offset = torch.clamp(self.reparametrization[6](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[6](x, edge_index))
+        #x = self.drop1(x)
+
+        return F.log_softmax(x, dim=1)
+
+class GCNNet9(nn.Module):
+    def __init__(self,
+                 num_features,
+                 num_classes,
+                 nhid = 16,
+                 activation = 'atan',
+                 dropout_prob=0.3,
+                 version = 'bregman'):
+
+        super(GCNNet9, self).__init__()
+        activation = activation.lower()
+        version =  version.lower()
+        # Hidden layers
+        self.layers = nn.ModuleList()
+        self.reparametrization = nn.ModuleList()
+        self.activation, self.offset, self.range = get(activation_name=activation, version=version)
+        self.drop1 = nn.Dropout(dropout_prob)
+
+        # To do ...
+        self.reparametrization.append(linear_with_init(num_features, nhid, init='simplex'))
+        self.reparametrization.append(nn.Identity())  # return input as output
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(linear_with_init(nhid, num_classes, init='simplex'))
+
+        # Bregman GCN layers  (GCN can be replaced with GAT, ChebNet etc.)
+        self.layers.append(GCNConv(in_channels = num_features, out_channels = nhid))
+        # for bregman
+        self.layers.append(GCNConv(in_channels= nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=nhid))
+        # Output
+        self.layers.append(GCNConv(in_channels=nhid, out_channels=num_classes))
+
+    def forward(self, data, edge_index):
+        x = data.x  # x has shape [num_nodes, num_input_features]
+        self.reparametrization[0] = constraint(self.reparametrization[0])
+        x_offset = torch.clamp(self.reparametrization[0](x), self.range[0], self.range[1])  # 限制self.reparametrization[0](x)的大小
+        x = self.activation(self.offset(x_offset) + self.layers[0](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[1](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[1](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[2](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[2](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[3](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[3](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[4](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[4](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[5](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[5](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[6](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[6](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[7](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[7](x, edge_index))
+        x = self.drop1(x)
+
+        self.reparametrization[8] = constraint(self.reparametrization[8])
+        x_offset = torch.clamp(self.reparametrization[8](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[8](x, edge_index))
+        #x = self.drop1(x)
+
+        return F.log_softmax(x, dim=1)
+
+
 class GATNet(nn.Module):
 
     def __init__(self,
@@ -160,6 +379,226 @@ class GATNet(nn.Module):
         self.reparametrization[2] = constraint(self.reparametrization[2])
         x_offset = torch.clamp(self.reparametrization[2](x), self.range[0], self.range[1])
         x = self.activation(self.offset(x_offset) + self.layers[2](x, edge_index))
+        #x = self.drop1(x)
+
+        return F.log_softmax(x, dim=1)
+
+
+class GATNet5(nn.Module):
+    def __init__(self,
+                 num_features,
+                 num_classes,
+                 nhid = 16,
+                 activation = 'atan',
+                 dropout_prob=0.3,
+                 version = 'bregman'):
+
+        super(GATNet5, self).__init__()
+        activation = activation.lower()
+        version =  version.lower()
+        # Hidden layers
+        self.layers = nn.ModuleList()
+        self.reparametrization = nn.ModuleList()
+        self.activation, self.offset, self.range = get(activation_name=activation, version=version)
+        self.drop1 = nn.Dropout(dropout_prob)
+
+        # To do ...
+        self.reparametrization.append(linear_with_init(num_features, nhid, init='simplex'))
+        self.reparametrization.append(nn.Identity())  # return input as output
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(linear_with_init(nhid, num_classes, init='simplex'))
+
+        # Bregman GCN layers  (GCN can be replaced with GAT, ChebNet etc.)
+        self.layers.append(GATConv(in_channels = num_features, out_channels = nhid))
+        # for bregman
+        self.layers.append(GATConv(in_channels= nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        # Output
+        self.layers.append(GATConv(in_channels=nhid, out_channels=num_classes))
+
+
+    def forward(self, data, edge_index):
+        x = data.x  # x has shape [num_nodes, num_input_features]
+        self.reparametrization[0] = constraint(self.reparametrization[0])
+        x_offset = torch.clamp(self.reparametrization[0](x), self.range[0], self.range[1])  # 限制self.reparametrization[0](x)的大小
+        x = self.activation(self.offset(x_offset) + self.layers[0](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[1](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[1](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[2](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[2](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[3](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[3](x, edge_index))
+        x = self.drop1(x)
+
+        self.reparametrization[4] = constraint(self.reparametrization[4])
+        x_offset = torch.clamp(self.reparametrization[4](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[4](x, edge_index))
+        #x = self.drop1(x)
+
+        return F.log_softmax(x, dim=1)
+
+class GATNet7(nn.Module):
+    def __init__(self,
+                 num_features,
+                 num_classes,
+                 nhid = 16,
+                 activation = 'atan',
+                 dropout_prob=0.3,
+                 version = 'bregman'):
+
+        super(GATNet7, self).__init__()
+        activation = activation.lower()
+        version =  version.lower()
+        # Hidden layers
+        self.layers = nn.ModuleList()
+        self.reparametrization = nn.ModuleList()
+        self.activation, self.offset, self.range = get(activation_name=activation, version=version)
+        self.drop1 = nn.Dropout(dropout_prob)
+
+        # To do ...
+        self.reparametrization.append(linear_with_init(num_features, nhid, init='simplex'))
+        self.reparametrization.append(nn.Identity())  # return input as output
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(linear_with_init(nhid, num_classes, init='simplex'))
+
+        # Bregman GCN layers  (GCN can be replaced with GAT, ChebNet etc.)
+        self.layers.append(GATConv(in_channels = num_features, out_channels = nhid))
+        # for bregman
+        self.layers.append(GATConv(in_channels= nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        # Output
+        self.layers.append(GATConv(in_channels=nhid, out_channels=num_classes))
+
+
+    def forward(self, data, edge_index):
+        x = data.x  # x has shape [num_nodes, num_input_features]
+        self.reparametrization[0] = constraint(self.reparametrization[0])
+        x_offset = torch.clamp(self.reparametrization[0](x), self.range[0], self.range[1])  # 限制self.reparametrization[0](x)的大小
+        x = self.activation(self.offset(x_offset) + self.layers[0](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[1](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[1](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[2](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[2](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[3](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[3](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[4](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[4](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[5](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[5](x, edge_index))
+        x = self.drop1(x)
+
+        self.reparametrization[6] = constraint(self.reparametrization[6])
+        x_offset = torch.clamp(self.reparametrization[6](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[6](x, edge_index))
+        #x = self.drop1(x)
+
+        return F.log_softmax(x, dim=1)
+
+class GATNet9(nn.Module):
+    def __init__(self,
+                 num_features,
+                 num_classes,
+                 nhid = 16,
+                 activation = 'atan',
+                 dropout_prob=0.3,
+                 version = 'bregman'):
+
+        super(GATNet9, self).__init__()
+        activation = activation.lower()
+        version =  version.lower()
+        # Hidden layers
+        self.layers = nn.ModuleList()
+        self.reparametrization = nn.ModuleList()
+        self.activation, self.offset, self.range = get(activation_name=activation, version=version)
+        self.drop1 = nn.Dropout(dropout_prob)
+
+        # To do ...
+        self.reparametrization.append(linear_with_init(num_features, nhid, init='simplex'))
+        self.reparametrization.append(nn.Identity())  # return input as output
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(nn.Identity())
+        self.reparametrization.append(linear_with_init(nhid, num_classes, init='simplex'))
+
+        # Bregman GCN layers  (GCN can be replaced with GAT, ChebNet etc.)
+        self.layers.append(GATConv(in_channels = num_features, out_channels = nhid))
+        # for bregman
+        self.layers.append(GATConv(in_channels= nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        self.layers.append(GATConv(in_channels=nhid, out_channels=nhid))
+        # Output
+        self.layers.append(GATConv(in_channels=nhid, out_channels=num_classes))
+
+
+    def forward(self, data, edge_index):
+        x = data.x  # x has shape [num_nodes, num_input_features]
+        self.reparametrization[0] = constraint(self.reparametrization[0])
+        x_offset = torch.clamp(self.reparametrization[0](x), self.range[0], self.range[1])  # 限制self.reparametrization[0](x)的大小
+        x = self.activation(self.offset(x_offset) + self.layers[0](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[1](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[1](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[2](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[2](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[3](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[3](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[4](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[4](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[5](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[5](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[6](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[6](x, edge_index))
+        x = self.drop1(x)
+
+        x_offset = torch.clamp(self.reparametrization[7](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[7](x, edge_index))
+        x = self.drop1(x)
+
+        self.reparametrization[8] = constraint(self.reparametrization[8])
+        x_offset = torch.clamp(self.reparametrization[8](x), self.range[0], self.range[1])
+        x = self.activation(self.offset(x_offset) + self.layers[8](x, edge_index))
         #x = self.drop1(x)
 
         return F.log_softmax(x, dim=1)
